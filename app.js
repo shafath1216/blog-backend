@@ -35,9 +35,9 @@ app.get('/test-db', async (req, res) => {
 });
 
 // Get all posts
-app.get('/api/posts', async (req, res) => {
+app.get('/posts', async (req, res) => {
   try {
-    const result = await pool.query('SELECT * FROM posts ORDER BY id ASC');
+    const result = await pool.query('SELECT * FROM posts ORDER BY id DESC');
     res.json(result.rows);
   } catch (err) {
     console.error(err);
@@ -46,7 +46,7 @@ app.get('/api/posts', async (req, res) => {
 });
 
 // Get post by ID
-app.get('/api/posts/:id', async (req, res) => {
+app.get('/posts/:id', async (req, res) => {
   const { id } = req.params;
   try {
     const result = await pool.query('SELECT * FROM posts WHERE id = $1', [id]);
@@ -61,7 +61,7 @@ app.get('/api/posts/:id', async (req, res) => {
 });
 
 // Create a new post
-app.post('/api/posts', async (req, res) => {
+app.post('/posts', async (req, res) => {
   const { title, username, story } = req.body;
   try {
     const result = await pool.query(
