@@ -2,6 +2,8 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import pkg from 'pg';
+import client from 'prom-client'; // <-- Prometheus client
+
 const { Pool } = pkg;
 
 dotenv.config();
@@ -12,6 +14,25 @@ const port = process.env.PORT || 3000;
 app.use(cors());
 app.use(express.json());
 
+// ----------------------
+// Prometheus metrics
+// ----------------------
+const register = new client.Registry();
+client.collectDefaultMetrics({ register }); // CPU, memory, event loop
+
+// Example: custom counter for /hello requests
+const postsCounter = new client.Counter({
+  name: 'posts_requests_total',
+  help: 'Total number of /posts requests',
+});
+
+register.registerMetric(postsCounter)
+// Expose metrics endpoint
+app.get('/metrics', async (req, res) => {
+  res.setHeader('Content-Type', register.contentType);
+  res.send(await register.metrics());
+});
+
 const pool = new Pool({
   user: process.env.DB_USER,
   host: process.env.DB_HOST,
@@ -20,23 +41,10 @@ const pool = new Pool({
   port: process.env.DB_PORT,
 });
 
-// Simple test route
-app.get('/hello', (req, res) => res.send('Hello world'));
-
-// Test database connection
-app.get('/test-db', async (req, res) => {
-  try {
-    const result = await pool.query('SELECT * FROM posts LIMIT 5');
-    res.json(result.rows);
-  } catch (err) {
-    console.error(err.message);
-    res.status(500).send('Database connection failed');
-  }
-});
-
 // Get all posts
 app.get('/posts', async (req, res) => {
   try {
+    postsCounter.inc();
     const result = await pool.query('SELECT * FROM posts ORDER BY id DESC');
     res.json(result.rows);
   } catch (err) {
