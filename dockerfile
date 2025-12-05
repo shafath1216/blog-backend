@@ -3,23 +3,19 @@
 # ----------------------
 FROM node:20-alpine AS build
 
-# Set working directory
 WORKDIR /app
 
-# Copy package.json and package-lock.json first for caching
+# Copy package.json first to leverage caching
 COPY package*.json ./
 
-# Use Cloudflare npm registry mirror (fixes E500 error)
+# Use Cloudflare npm registry to avoid npm registry issues
 RUN npm config set registry https://registry.npmjs.cf/
 
 # Install dependencies
 RUN npm install
 
-# Copy the rest of the app
+# Copy the rest of the source code
 COPY . .
-
-# (Optional) Build step if needed
-# RUN npm run build
 
 # ----------------------
 # Stage 2: Production
@@ -28,7 +24,7 @@ FROM node:20-alpine
 
 WORKDIR /app
 
-# Copy built code and installed modules from previous stage
+# Copy built code and node_modules from the build stage
 COPY --from=build /app /app
 
 # Expose backend port
