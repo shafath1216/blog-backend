@@ -1,15 +1,22 @@
 # ----------------------
 # Stage 1: Build
 # ----------------------
-FROM node:20-alpine AS build
+FROM node:20-bullseye AS build
 
+# Set working directory
 WORKDIR /app
 
-# Copy package.json first to leverage caching
+# Copy package.json and package-lock.json first to leverage caching
 COPY package*.json ./
 
 # Use Cloudflare npm registry to avoid npm registry issues
 RUN npm config set registry https://registry.npmjs.cf/
+
+# Upgrade npm to latest stable to avoid npm bugs
+RUN npm install -g npm@latest
+
+# Optional: clear npm cache
+RUN npm cache clean --force
 
 # Install dependencies
 RUN npm install
@@ -20,11 +27,11 @@ COPY . .
 # ----------------------
 # Stage 2: Production
 # ----------------------
-FROM node:20-alpine
+FROM node:20-bullseye
 
 WORKDIR /app
 
-# Copy built code and node_modules from the build stage
+# Copy built code and node_modules from build stage
 COPY --from=build /app /app
 
 # Expose backend port
