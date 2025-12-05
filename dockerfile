@@ -9,10 +9,10 @@ WORKDIR /app
 # Copy package.json and package-lock.json first to leverage caching
 COPY package*.json ./
 
-# Use Cloudflare npm registry to avoid npm registry issues
-RUN npm config set registry https://registry.npmjs.cf/
+# Use official npm registry to avoid network issues
+RUN npm config set registry https://registry.npmjs.org/
 
-# Upgrade npm to latest stable to avoid npm bugs
+# Upgrade npm to latest stable
 RUN npm install -g npm@latest
 
 # Optional: clear npm cache
@@ -38,5 +38,5 @@ COPY --from=build /app /app
 EXPOSE 3000
 
 # Start backend
-CMD ["node", "app.js"]
+CMD ["npm", "start"]
 
